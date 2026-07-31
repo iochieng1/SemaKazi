@@ -36,9 +36,6 @@ vet quality before hiring a stranger.
 
 ## Out of scope (MVP)
 
-Explicitly excluded to keep the build achievable in 2 weeks and to avoid
-scope creep:
-
 - **Payments / escrow** — no in-app money movement; contact happens
   off-platform for now
 - **In-app booking/scheduling** — no calendar or job-request workflow yet

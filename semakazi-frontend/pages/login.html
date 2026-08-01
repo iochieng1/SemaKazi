@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log in — SemaKazi</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav id="nav"></nav>
+
+  <div class="container">
+    <div class="card">
+      <h1>Log in</h1>
+
+      <form id="login-form">
+        <label for="email">Email</label>
+        <input type="email" id="email" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" required />
+
+        <button type="submit">Log in</button>
+        <p class="error-message" id="error" style="display:none;"></p>
+      </form>
+
+      <p class="muted">Don't have an account? <a href="register.html">Sign up</a></p>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/nav.js"></script>
+  <script>
+    const errorEl = document.getElementById('error');
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.style.display = 'none';
+
+      const payload = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const { user, token } = await api.login(payload);
+        setToken(token);
+        setCurrentUser(user);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

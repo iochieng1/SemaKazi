@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fundi profile — SemaKazi</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav id="nav"></nav>
+
+  <div class="container" id="profile-container">
+    <p class="muted">Loading profile...</p>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/nav.js"></script>
+  <script>
+    const container = document.getElementById('profile-container');
+    const params = new URLSearchParams(window.location.search);
+    const profileId = params.get('id');
+
+    function renderProfile(profile) {
+      const avgRating = profile.reviews.length
+        ? (profile.reviews.reduce((sum, r) => sum + r.rating, 0) / profile.reviews.length).toFixed(1)
+        : null;
+
+      container.innerHTML = `
+        <div class="card">
+          <h1>${profile.name}</h1>
+          <p class="muted">${profile.trade || 'Trade not listed'} — ${profile.location || 'Location not listed'}</p>
+          ${avgRating ? `<p class="rating">★ ${avgRating} <span class="muted">(${profile.reviews.length} review${profile.reviews.length === 1 ? '' : 's'})</span></p>` : ''}
+          ${profile.bio ? `<p>${profile.bio}</p>` : ''}
+          ${profile.phone ? `<p class="muted">Contact: ${profile.phone}</p>` : ''}
+        </div>
+
+        <div class="card">
+          <h2>Skill badges</h2>
+          ${profile.badges.length
+            ? profile.badges.map(b => `<span class="badge-pill">${b.badge_name}</span>`).join('')
+            : `<p class="muted">No badges yet.</p>`
+          }
+        </div>
+
+        <div class="card">
+          <h2>Proof of work</h2>
+          ${profile.proof_of_work.length
+            ? profile.proof_of_work.map(p => `
+                <div style="margin-bottom:12px;">
+                  <img src="${p.media_url}" alt="${p.caption || 'Proof of work'}" style="max-width:100%; border-radius:8px;" onerror="this.style.display='none'" />
+                  ${p.caption ? `<p class="muted">${p.caption}</p>` : ''}
+                </div>
+              `).join('')
+            : `<p class="muted">No proof-of-work uploaded yet.</p>`
+          }
+        </div>
+
+        <div class="card">
+          <h2>Reviews</h2>
+          <div id="reviews-list">
+            ${profile.reviews.length
+              ? profile.reviews.map(r => `
+                  <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--color-border);">
+                    <p class="rating">★ ${r.rating} <strong>${r.reviewer_name}</strong></p>
+                    ${r.comment ? `<p>${r.comment}</p>` : ''}
+                  </div>
+                `).join('')
+              : `<p class="muted">No reviews yet. Be the first to leave one.</p>`
+            }
+          </div>
+
+          <h2>Leave a review</h2>
+          <form id="review-form">
+            <label for="reviewer_name">Your name</label>
+            <input type="text" id="reviewer_name" required />
+
+            <label for="rating">Rating</label>
+            <select id="rating" required>
+              <option value="5">5 - Excellent</option>
+              <option value="4">4 - Good</option>
+              <option value="3">3 - Average</option>
+              <option value="2">2 - Below average</option>
+              <option value="1">1 - Poor</option>
+            </select>
+
+            <label for="comment">Comment (optional)</label>
+            <textarea id="comment" rows="3"></textarea>
+
+            <button type="submit">Submit review</button>
+            <p class="error-message" id="review-error" style="display:none;"></p>
+          </form>
+        </div>
+      `;
+
+      document.getElementById('review-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById('review-error');
+        errorEl.style.display = 'none';
+
+        try {
+          await api.addReview(profileId, {
+            reviewer_name: document.getElementById('reviewer_name').value,
+            rating: Number(document.getElementById('rating').value),
+            comment: document.getElementById('comment').value || undefined
+          });
+          const updated = await api.getProfile(profileId);
+          renderProfile(updated);
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        }
+      });
+    }
+
+    async function loadProfile() {
+      if (!profileId) {
+        container.innerHTML = `<p class="error-message">No profile specified.</p>`;
+        return;
+      }
+      try {
+        const profile = await api.getProfile(profileId);
+        renderProfile(profile);
+      } catch (err) {
+        container.innerHTML = `<p class="error-message">${err.message}</p>`;
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

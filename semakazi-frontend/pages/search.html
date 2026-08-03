@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find a fundi — SemaKazi</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav id="nav"></nav>
+
+  <div class="container">
+    <div class="card">
+      <h1>Find a fundi</h1>
+
+      <form id="search-form">
+        <label for="trade">Trade</label>
+        <input type="text" id="trade" placeholder="e.g. Electrician, Carpenter" />
+
+        <label for="location">Location</label>
+        <input type="text" id="location" placeholder="e.g. Nairobi - Kawangware" />
+
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/nav.js"></script>
+  <script>
+    const resultsEl = document.getElementById('results');
+
+    function renderResults(fundis) {
+      if (fundis.length === 0) {
+        resultsEl.innerHTML = `<p class="muted">No fundis found. Try a different trade or location.</p>`;
+        return;
+      }
+
+      resultsEl.innerHTML = fundis.map(f => `
+        <a href="profile.html?id=${f.id}" style="text-decoration:none; color:inherit;">
+          <div class="card">
+            <h2>${f.name}</h2>
+            <p class="muted">${f.trade || 'Trade not listed'} — ${f.location || 'Location not listed'}</p>
+            ${f.average_rating
+              ? `<p class="rating">★ ${f.average_rating} <span class="muted">(${f.review_count} review${f.review_count === 1 ? '' : 's'})</span></p>`
+              : `<p class="muted">No reviews yet</p>`
+            }
+          </div>
+        </a>
+      `).join('');
+    }
+
+    async function runSearch() {
+      const trade = document.getElementById('trade').value.trim();
+      const location = document.getElementById('location').value.trim();
+
+      const params = {};
+      if (trade) params.trade = trade;
+      if (location) params.location = location;
+
+      resultsEl.innerHTML = `<p class="muted">Searching...</p>`;
+
+      try {
+        const fundis = await api.searchProfiles(params);
+        renderResults(fundis);
+      } catch (err) {
+        resultsEl.innerHTML = `<p class="error-message">${err.message}</p>`;
+      }
+    }
+
+    document.getElementById('search-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      runSearch();
+    });
+
+    // Load all fundis on first visit, no filters
+    runSearch();
+  </script>
+</body>
+</html>

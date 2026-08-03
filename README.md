@@ -91,13 +91,3 @@ semakazi/
 ## Local setup
 
 See `semakazi-backend/README.md` for backend setup instructions.
-
-Once the backend is running (`npm run dev` on port 4000), serve the frontend
-with any static file server, e.g.:
-
-```bash
-cd semakazi-frontend
-python3 -m http.server 8080
-```
-
-Then visit `http://localhost:8080` in your browser.

@@ -57,15 +57,12 @@ three trust signals: **proof-of-work** (photo/video of completed jobs),
 
 ## Project status
 
-Built in phased delivery cycles with feature branches and documentation
-tracked at each stage.
-
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Planning, README, PRD, repo setup | ✅ |
 | 1 | Backend foundation: models, auth, core APIs | ✅ |
-| 2 | Frontend + media upload | ⏳ |
-| 3 | Ratings/trust logic, search | ⏳ |
+| 2 | Frontend: auth pages, search, profile, dashboard | ✅ |
+| 3 | Ratings/trust logic, search filtering | ✅ (delivered as part of Phases 1–2) |
 | 4 | Tests, polish | ⏳ |
 | 5 | Deployment | ⏳ |
 
@@ -76,9 +73,31 @@ semakazi/
 ├── docs/
 │   └── PRD.md
 ├── semakazi-backend/       # Phase 1 (see its own README for setup)
-└── semakazi-frontend/      # Phase 2 (added later)
+│   └── src/
+│       ├── db/
+│       ├── middleware/
+│       └── routes/
+└── semakazi-frontend/      # Phase 2
+    ├── css/
+    ├── js/
+    └── pages/
+        ├── register.html
+        ├── login.html
+        ├── search.html
+        ├── profile.html
+        └── dashboard.html
 ```
 
 ## Local setup
 
 See `semakazi-backend/README.md` for backend setup instructions.
+
+Once the backend is running (`npm run dev` on port 4000), serve the frontend
+with any static file server, e.g.:
+
+```bash
+cd semakazi-frontend
+python3 -m http.server 8080
+```
+
+Then visit `http://localhost:8080` in your browser.

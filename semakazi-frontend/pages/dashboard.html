@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SemaKazi</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav id="nav"></nav>
+
+  <div class="container" id="dashboard-container">
+    <p class="muted">Loading dashboard...</p>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/nav.js"></script>
+  <script>
+    const container = document.getElementById('dashboard-container');
+    const user = getCurrentUser();
+
+    // Protected route — bounce to login if there's no session
+    if (!user || !getToken()) {
+      window.location.href = 'login.html';
+    }
+
+    function renderDashboard(profile) {
+      container.innerHTML = `
+        <div class="card">
+          <h1>Welcome, ${profile.name}</h1>
+          <p class="muted">
+            <a href="profile.html?id=${profile.id}">View your public profile</a>
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Edit profile</h2>
+          <form id="edit-form">
+            <label for="trade">Trade</label>
+            <input type="text" id="trade" value="${profile.trade || ''}" />
+
+            <label for="location">Location</label>
+            <input type="text" id="location" value="${profile.location || ''}" />
+
+            <label for="bio">Bio</label>
+            <textarea id="bio" rows="3">${profile.bio || ''}</textarea>
+
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" value="${profile.phone || ''}" />
+
+            <button type="submit">Save changes</button>
+            <p class="error-message" id="edit-error" style="display:none;"></p>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Add proof of work</h2>
+          <form id="pow-form">
+            <label for="media_url">Image/video URL</label>
+            <input type="url" id="media_url" placeholder="https://..." required />
+
+            <label for="caption">Caption</label>
+            <input type="text" id="caption" placeholder="e.g. Rewired a 3-bedroom house" />
+
+            <button type="submit">Add entry</button>
+            <p class="error-message" id="pow-error" style="display:none;"></p>
+          </form>
+
+          <h2 style="margin-top:24px;">Your proof of work</h2>
+          <div id="pow-list">
+            ${profile.proof_of_work.length
+              ? profile.proof_of_work.map(p => `
+                  <div class="card" style="margin-bottom:8px;">
+                    <p>${p.caption || '(no caption)'}</p>
+                    <p class="muted" style="word-break:break-all;">${p.media_url}</p>
+                    <button class="secondary" data-delete-id="${p.id}">Remove</button>
+                  </div>
+                `).join('')
+              : `<p class="muted">You haven't added any proof-of-work yet.</p>`
+            }
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Your stats</h2>
+          <p><strong>${profile.reviews.length}</strong> review${profile.reviews.length === 1 ? '' : 's'}</p>
+          <p><strong>${profile.badges.length}</strong> skill badge${profile.badges.length === 1 ? '' : 's'}</p>
+        </div>
+      `;
+
+      document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById('edit-error');
+        errorEl.style.display = 'none';
+        try {
+          await api.updateProfile(profile.id, {
+            trade: document.getElementById('trade').value,
+            location: document.getElementById('location').value,
+            bio: document.getElementById('bio').value,
+            phone: document.getElementById('phone').value
+          });
+          refresh();
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        }
+      });
+
+      document.getElementById('pow-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById('pow-error');
+        errorEl.style.display = 'none';
+        try {
+          await api.addProofOfWork({
+            media_url: document.getElementById('media_url').value,
+            caption: document.getElementById('caption').value || undefined
+          });
+          refresh();
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        }
+      });
+
+      document.querySelectorAll('[data-delete-id]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await api.deleteProofOfWork(btn.dataset.deleteId);
+            refresh();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+      });
+    }
+
+    async function refresh() {
+      try {
+        const profile = await api.getProfile(user.id);
+        renderDashboard(profile);
+      } catch (err) {
+        container.innerHTML = `<p class="error-message">${err.message}</p>`;
+      }
+    }
+
+    refresh();
+  </script>
+</body>
+</html>

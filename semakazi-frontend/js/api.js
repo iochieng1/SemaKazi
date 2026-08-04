@@ -1,7 +1,8 @@
 // Central place for all backend calls. Keeps fetch/error-handling logic
-// out of every page, and gives us one spot to change the API base URL.
+// out of every page. The actual base URL lives in config.js (loaded before
+// this file) so it can be changed per environment without touching this code.
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = window.API_BASE;
 
 function getToken() {
   return localStorage.getItem('semakazi_token');

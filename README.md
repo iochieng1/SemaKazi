@@ -63,7 +63,7 @@ three trust signals: **proof-of-work** (photo/video of completed jobs),
 | 1 | Backend foundation: models, auth, core APIs | ✅ |
 | 2 | Frontend: auth pages, search, profile, dashboard | ✅ |
 | 3 | Ratings/trust logic, search filtering | ✅ (delivered as part of Phases 1–2) |
-| 4 | Tests, polish | ⏳ |
+| 4 | Tests, polish | ✅ |
 | 5 | Deployment | ⏳ |
 
 ## Repo structure
@@ -80,6 +80,9 @@ semakazi/
 └── semakazi-frontend/      # Phase 2
     ├── css/
     ├── js/
+    │   ├── config.js
+    │   ├── api.js
+    │   └── nav.js
     └── pages/
         ├── register.html
         ├── login.html
@@ -91,3 +94,13 @@ semakazi/
 ## Local setup
 
 See `semakazi-backend/README.md` for backend setup instructions.
+
+Once the backend is running (`npm run dev` on port 4000), serve the frontend
+with any static file server, e.g.:
+
+```bash
+cd semakazi-frontend
+python3 -m http.server 8080
+```
+
+Then visit `http://localhost:8080` in your browser.

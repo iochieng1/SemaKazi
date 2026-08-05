@@ -104,3 +104,7 @@ python3 -m http.server 8080
 ```
 
 Then visit `http://localhost:8080` in your browser.
+
+Verified working end-to-end locally: registration, login, fundi search,
+profile view with reviews, and the dashboard flow (edit profile, add
+proof-of-work).

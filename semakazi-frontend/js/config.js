@@ -4,4 +4,4 @@
 // When you deploy, change this one line to your live backend URL
 // (e.g. 'https://semakazi-api.onrender.com/api') — nothing else needs to change.
  
-window.API_BASE = 'http://localhost:4000/api';
+window.API_BASE = 'https://semakazi-api.onrender.com/api';

@@ -6,8 +6,8 @@ API_URL="${API_URL:-}"
 OUT_FILE="$(dirname \"$0\")/js/env.js"
 
 if [ -z "$API_URL" ]; then
-  echo "API_URL is not set; writing empty env stub to $OUT_FILE"
-  printf "window.__SEM_AKAZI_API__ = null;\n" > "$OUT_FILE"
+  echo "API_URL is not set; writing local API fallback to $OUT_FILE"
+  printf "window.__SEM_AKAZI_API__ = 'http://localhost:4000/api';\n" > "$OUT_FILE"
   exit 0
 fi
 

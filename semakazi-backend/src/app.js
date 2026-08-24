@@ -6,6 +6,7 @@ const profileRoutes = require('./routes/profiles');
 const proofOfWorkRoutes = require('./routes/proofOfWork');
 const reviewRoutes = require('./routes/reviews');
 const badgeRoutes = require('./routes/badges');
+const requestRoutes = require('./routes/request');
 
 // Builds and returns a configured Express app, without starting a server.
 // Kept separate from server.js so tests can import this directly and spin
@@ -23,6 +24,7 @@ function createApp() {
   app.use('/api/proof-of-work', proofOfWorkRoutes);
   app.use('/api/reviews', reviewRoutes);
   app.use('/api/badges', badgeRoutes);
+  app.use('/api/requests', requestRoutes);
 
   app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 

@@ -82,12 +82,25 @@
           </div>
         </div>
 
+        ${profile.role === 'fundi' ? `
+          <div class="card">
+            <h2>Incoming requests</h2>
+            <div id="requests-list">
+              <p class="muted">Loading...</p>
+            </div>
+          </div>
+        ` : ''}
+
         <div class="card">
           <h2>Your stats</h2>
           <p><strong>${profile.reviews.length}</strong> review${profile.reviews.length === 1 ? '' : 's'}</p>
           <p><strong>${profile.badges.length}</strong> skill badge${profile.badges.length === 1 ? '' : 's'}</p>
         </div>
       `;
+
+      if (profile.role === 'fundi') {
+        loadRequests();
+      }
 
       document.getElementById('edit-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -133,6 +146,44 @@
           }
         });
       });
+    }
+
+    async function loadRequests() {
+      const listEl = document.getElementById('requests-list');
+      try {
+        const requests = await api.getIncomingRequests();
+        if (requests.length === 0) {
+          listEl.innerHTML = `<p class="muted">No requests yet.</p>`;
+          return;
+        }
+        listEl.innerHTML = requests.map(r => `
+          <div class="card" style="margin-bottom:8px;">
+            <p><strong>${r.client_name}</strong> <span class="muted">(${r.client_phone || 'no phone listed'})</span></p>
+            <p>${r.message}</p>
+            ${r.preferred_date ? `<p class="muted">Preferred date: ${r.preferred_date}</p>` : ''}
+            <p class="rating" style="text-transform:uppercase;">${r.status}</p>
+            ${r.status === 'pending' ? `
+              <div style="display:flex; gap:8px;">
+                <button data-request-id="${r.id}" data-status="accepted">Accept</button>
+                <button class="secondary" data-request-id="${r.id}" data-status="declined">Decline</button>
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+
+        document.querySelectorAll('[data-request-id]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            try {
+              await api.updateRequestStatus(btn.dataset.requestId, btn.dataset.status);
+              loadRequests();
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        });
+      } catch (err) {
+        listEl.innerHTML = `<p class="error-message">${err.message}</p>`;
+      }
     }
 
     async function refresh() {

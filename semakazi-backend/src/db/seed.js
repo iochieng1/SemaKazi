@@ -52,16 +52,18 @@ function seedIfEmpty() {
   insertMany(users);
 
   const juma = db.prepare('SELECT id FROM users WHERE email = ?').get('juma@example.com');
+  const clientTest = db.prepare('SELECT id, name FROM users WHERE email = ?').get('client@example.com');
+  const wanjiru = db.prepare('SELECT id, name FROM users WHERE email = ?').get('wanjiru@example.com');
 
   db.prepare(`
-    INSERT INTO reviews (fundi_id, reviewer_name, rating, comment)
+    INSERT INTO reviews (fundi_id, reviewer_id, reviewer_name, rating, comment)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(juma.id, clientTest.id, clientTest.name, 5, 'Fixed our wiring fault fast and explained everything.');
+
+  db.prepare(`
+    INSERT INTO skill_badges (user_id, badge_name, awarded_by, awarded_by_id)
     VALUES (?, ?, ?, ?)
-  `).run(juma.id, 'Peter M.', 5, 'Fixed our wiring fault fast and explained everything.');
-
-  db.prepare(`
-    INSERT INTO skill_badges (user_id, badge_name, awarded_by)
-    VALUES (?, ?, ?)
-  `).run(juma.id, 'Certified Wiring Safety', 'SemaKazi Community Review');
+  `).run(juma.id, 'Certified Wiring Safety', wanjiru.name, wanjiru.id);
 
   console.log('Seed complete. Sample login: juma@example.com / password123');
 }

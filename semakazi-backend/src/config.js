@@ -22,5 +22,11 @@ if (!jwtSecret) {
 
 module.exports = {
   jwtSecret,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d'
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  // Simple shared-secret admin auth for moderation routes — no separate
+  // admin user system needed for an MVP this size. Set ADMIN_TOKEN in
+  // production; falls back to a fixed dev value locally, same pattern
+  // as JWT_SECRET above.
+  adminToken: process.env.ADMIN_TOKEN || 'semakazi-local-admin-dev-only'
 };
+

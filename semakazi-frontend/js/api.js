@@ -58,6 +58,11 @@ const api = {
   updateProfile: (id, payload) => apiRequest(`/profiles/${id}`, { method: 'PUT', body: payload, auth: true }),
   addProofOfWork: (payload) => apiRequest('/proof-of-work', { method: 'POST', body: payload, auth: true }),
   deleteProofOfWork: (id) => apiRequest(`/proof-of-work/${id}`, { method: 'DELETE', auth: true }),
-  addReview: (fundiId, payload) => apiRequest(`/reviews/${fundiId}`, { method: 'POST', body: payload }),
-  addBadge: (userId, payload) => apiRequest(`/badges/${userId}`, { method: 'POST', body: payload, auth: true })
+  addReview: (fundiId, payload) => apiRequest(`/reviews/${fundiId}`, { method: 'POST', body: payload, auth: true }),
+  flagReview: (reviewId) => apiRequest(`/reviews/${reviewId}/flag`, { method: 'POST', auth: true }),
+  addBadge: (userId, payload) => apiRequest(`/badges/${userId}`, { method: 'POST', body: payload, auth: true }),
+  sendRequest: (payload) => apiRequest('/requests', { method: 'POST', body: payload, auth: true }),
+  getIncomingRequests: () => apiRequest('/requests/incoming', { auth: true }),
+  updateRequestStatus: (id, status) => apiRequest(`/requests/${id}/status`, { method: 'PUT', body: { status }, auth: true })
 };
+

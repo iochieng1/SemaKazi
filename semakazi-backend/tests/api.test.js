@@ -102,9 +102,15 @@ test('profile search returns fundis with rating info', async () => {
     body: { name: 'Search Fundi', email: 'search@test.com', password: 'password123', role: 'fundi', trade: 'Mechanic', location: 'Mombasa' }
   });
 
+  const reviewer = await request('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'A Client', email: 'searchreviewer@test.com', password: 'password123', role: 'client' }
+  });
+
   await request(`/api/reviews/${reg.data.user.id}`, {
     method: 'POST',
-    body: { reviewer_name: 'A Client', rating: 4, comment: 'Solid work' }
+    headers: { Authorization: `Bearer ${reviewer.data.token}` },
+    body: { rating: 4, comment: 'Solid work' }
   });
 
   const { status, data } = await request('/api/profiles?trade=Mechanic');
@@ -133,4 +139,62 @@ test('a user cannot edit another user\'s profile', async () => {
 
   assert.equal(status, 403);
   assert.ok(data.error);
+});
+
+test('reviews require authentication', async () => {
+  const { status } = await request('/api/reviews/1', {
+    method: 'POST',
+    body: { rating: 5, comment: 'test' }
+  });
+  assert.equal(status, 401);
+});
+
+test('badge endorsement is deduplicated per endorser', async () => {
+  const fundi = await request('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'Badge Fundi', email: 'badgefundi@test.com', password: 'password123', role: 'fundi', trade: 'Painter', location: 'Kisumu' }
+  });
+  const endorser = await request('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'Endorser', email: 'endorser@test.com', password: 'password123' }
+  });
+
+  const first = await request(`/api/badges/${fundi.data.user.id}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${endorser.data.token}` },
+    body: { badge_name: 'Clean Finish' }
+  });
+  assert.equal(first.status, 201);
+
+  const second = await request(`/api/badges/${fundi.data.user.id}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${endorser.data.token}` },
+    body: { badge_name: 'Clean Finish' }
+  });
+  assert.equal(second.status, 409);
+});
+
+test('a client can send a job request and the fundi sees it', async () => {
+  const fundi = await request('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'Request Fundi', email: 'requestfundi@test.com', password: 'password123', role: 'fundi', trade: 'Plumber', location: 'Nakuru' }
+  });
+  const client = await request('/api/auth/register', {
+    method: 'POST',
+    body: { name: 'Request Client', email: 'requestclient@test.com', password: 'password123', role: 'client' }
+  });
+
+  const created = await request('/api/requests', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${client.data.token}` },
+    body: { fundi_id: fundi.data.user.id, message: 'Need a leak fixed' }
+  });
+  assert.equal(created.status, 201);
+
+  const incoming = await request('/api/requests/incoming', {
+    headers: { Authorization: `Bearer ${fundi.data.token}` }
+  });
+  assert.equal(incoming.status, 200);
+  assert.equal(incoming.data.length, 1);
+  assert.equal(incoming.data[0].client_name, 'Request Client');
 });

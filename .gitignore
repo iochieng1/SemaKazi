@@ -27,3 +27,7 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+# Database backups and restore drills (contain real user data)
+backups/
+drill/
+semakazi-backend/tests/.test-data*/

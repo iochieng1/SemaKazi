@@ -1,13 +1,13 @@
 const express = require('express');
 const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-// POST /api/proof-of-work — logged-in fundi adds a media entry
+// POST /api/proof-of-work — fundis only; adds a media entry to their portfolio
 // Note: this stores a media_url string. Actual file upload to Cloudinary/S3
 // is a Phase 2 (frontend/media) concern — this endpoint just persists the result.
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, requireRole('fundi'), (req, res) => {
   const { media_url, caption } = req.body;
   if (!media_url) return res.status(400).json({ error: 'media_url is required' });
 

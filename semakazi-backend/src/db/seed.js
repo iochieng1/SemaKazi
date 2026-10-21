@@ -1,10 +1,20 @@
 const bcrypt = require('bcryptjs');
 const db = require('./index');
 
-// Exported so both `npm run seed` (manual, CLI) and server startup
-// (automatic, for platforms with ephemeral disks like Render's free tier)
-// can call the same logic safely, any number of times.
+// Demo data uses published, guessable passwords (e.g. password123), so it
+// must never become real login identities. Seeding is refused outright in
+// production, and server startup only seeds when SEED_DEMO_DATA=true.
+function assertNotProduction() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Refusing to seed demo accounts in production (NODE_ENV=production).');
+  }
+}
+
+// Exported so both `npm run seed` (manual, CLI) and an opted-in server
+// startup can call the same logic safely, any number of times.
 function seedIfEmpty() {
+  assertNotProduction();
+
   const { count } = db.prepare('SELECT COUNT(*) as count FROM users').get();
   if (count > 0) {
     console.log('Database already has data — skipping seed.');
@@ -68,11 +78,19 @@ function seedIfEmpty() {
   console.log('Seed complete. Sample login: juma@example.com / password123');
 }
 
+// Called on every server start. Seeds only on an explicit non-production
+// opt-in, so an empty production database stays empty.
+function seedOnStartup() {
+  if (process.env.NODE_ENV === 'production') return;
+  if (process.env.SEED_DEMO_DATA !== 'true') return;
+  seedIfEmpty();
+}
+
 // Allow running directly via `npm run seed`, while still being importable
-// as a function from server.js for auto-seeding on startup.
+// from server.js for the opted-in startup seed.
 if (require.main === module) {
   require('dotenv').config();
   seedIfEmpty();
 }
 
-module.exports = seedIfEmpty;
+module.exports = { seedIfEmpty, seedOnStartup };

@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
 // Lightweight alternative to a full booking/calendar system: just a
 // formal, in-platform way to say "I want to hire you," instead of only
 // having a phone number to go on.
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, requireRole('client'), (req, res) => {
   const { fundi_id, message, preferred_date } = req.body;
 
   if (!fundi_id || !message) {
@@ -45,7 +45,7 @@ router.get('/incoming', requireAuth, (req, res) => {
 
 // PUT /api/requests/:id/status — the fundi who received a request can
 // accept or decline it.
-router.put('/:id/status', requireAuth, (req, res) => {
+router.put('/:id/status', requireAuth, requireRole('fundi'), (req, res) => {
   const { status } = req.body;
   if (!['accepted', 'declined'].includes(status)) {
     return res.status(400).json({ error: 'status must be accepted or declined' });

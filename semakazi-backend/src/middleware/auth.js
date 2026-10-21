@@ -29,4 +29,16 @@ function requireSelf(paramName = 'id') {
   };
 }
 
-module.exports = { requireAuth, requireSelf };
+// Only lets accounts with one of the given roles through. Use after
+// requireAuth; the role comes from the verified token and can't be changed
+// after registration.
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: `Only ${roles.join(' or ')} accounts can do this` });
+    }
+    next();
+  };
+}
+
+module.exports = { requireAuth, requireSelf, requireRole };

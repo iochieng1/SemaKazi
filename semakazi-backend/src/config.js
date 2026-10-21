@@ -20,13 +20,37 @@ if (!jwtSecret) {
   jwtSecret = DEV_FALLBACK_SECRET;
 }
 
+// Shared secret for the moderation routes (review listing and permanent
+// deletion). Same pattern as JWT_SECRET, but stricter: the dev fallback is
+// published in this repo, so production refuses to start without a real,
+// long token rather than silently accepting the public one.
+const DEV_FALLBACK_ADMIN_TOKEN = 'semakazi-local-admin-dev-only';
+const MIN_ADMIN_TOKEN_LENGTH = 32;
+
+let adminToken = process.env.ADMIN_TOKEN;
+
+if (isProduction) {
+  if (!adminToken) {
+    throw new Error('ADMIN_TOKEN must be set in production. Refusing to start with no admin token.');
+  }
+  if (adminToken === DEV_FALLBACK_ADMIN_TOKEN) {
+    throw new Error('ADMIN_TOKEN is the public development fallback. Set a private token in production.');
+  }
+  if (adminToken.length < MIN_ADMIN_TOKEN_LENGTH) {
+    throw new Error(`ADMIN_TOKEN must be at least ${MIN_ADMIN_TOKEN_LENGTH} characters in production.`);
+  }
+} else if (!adminToken) {
+  console.warn(
+    '\n⚠️  ADMIN_TOKEN not set in .env — using a fixed local development fallback.\n' +
+    '   Moderation routes accept it only outside production.\n'
+  );
+  adminToken = DEV_FALLBACK_ADMIN_TOKEN;
+}
+
 module.exports = {
   jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  // Simple shared-secret admin auth for moderation routes — no separate
-  // admin user system needed for an MVP this size. Set ADMIN_TOKEN in
-  // production; falls back to a fixed dev value locally, same pattern
-  // as JWT_SECRET above.
-  adminToken: process.env.ADMIN_TOKEN || 'semakazi-local-admin-dev-only'
+  adminToken,
+  MIN_ADMIN_TOKEN_LENGTH
 };
 

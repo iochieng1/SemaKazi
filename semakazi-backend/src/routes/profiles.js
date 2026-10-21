@@ -25,24 +25,27 @@ router.get('/', (req, res) => {
 
   const fundis = db.prepare(query).all(...params);
 
-  // Attach average rating for each fundi so search results show trust signal up front
+  // Attach average rating for each fundi so search results show trust signal up front.
+  // Flagged reviews are hidden pending moderation, so they don't count either.
+  const ratingQuery = db.prepare(
+    'SELECT AVG(rating) as avg, COUNT(*) as count FROM reviews WHERE fundi_id = ? AND flagged = 0'
+  );
   const withRatings = fundis.map((f) => {
-    const { avg, count } = db.prepare(
-      'SELECT AVG(rating) as avg, COUNT(*) as count FROM reviews WHERE fundi_id = ?'
-    ).get(f.id);
+    const { avg, count } = ratingQuery.get(f.id);
     return { ...f, average_rating: avg ? Number(avg.toFixed(1)) : null, review_count: count };
   });
 
   res.json(withRatings);
 });
 
-// GET /api/profiles/:id — full profile with proof of work, reviews, badges
+// GET /api/profiles/:id — full profile with proof of work, reviews, badges.
+// Flagged reviews are left out; admins see them via /api/reviews/moderation/flagged.
 router.get('/:id', (req, res) => {
   const user = db.prepare(`SELECT ${PUBLIC_FIELDS} FROM users WHERE id = ?`).get(req.params.id);
   if (!user) return res.status(404).json({ error: 'Profile not found' });
 
   const proofOfWork = db.prepare('SELECT * FROM proof_of_work WHERE user_id = ? ORDER BY created_at DESC').all(user.id);
-  const reviews = db.prepare('SELECT * FROM reviews WHERE fundi_id = ? ORDER BY created_at DESC').all(user.id);
+  const reviews = db.prepare('SELECT * FROM reviews WHERE fundi_id = ? AND flagged = 0 ORDER BY created_at DESC').all(user.id);
   const badges = db.prepare('SELECT * FROM skill_badges WHERE user_id = ? ORDER BY created_at DESC').all(user.id);
 
   res.json({ ...user, proof_of_work: proofOfWork, reviews, badges });

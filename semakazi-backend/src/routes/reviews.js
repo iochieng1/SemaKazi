@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 const requireAdmin = require('../middleware/requireAdmin');
 
 const router = express.Router();
@@ -15,11 +15,11 @@ router.get('/moderation/flagged', requireAdmin, (req, res) => {
   res.json(flagged);
 });
 
-// POST /api/reviews/:fundiId — requires login. Ties every review to a real
+// POST /api/reviews/:fundiId — clients only. Ties every review to a real
 // account instead of an arbitrary typed name, closing the "anyone can claim
 // to be anyone" gap. Doesn't yet confirm an actual hire happened — that's
 // still a known limitation, documented in the README.
-router.post('/:fundiId', requireAuth, (req, res) => {
+router.post('/:fundiId', requireAuth, requireRole('client'), (req, res) => {
   const { rating, comment } = req.body;
   const { fundiId } = req.params;
 

@@ -24,7 +24,7 @@
     const viewer = getCurrentUser();
 
     function waLink(phone, name) {
-      const digits = (phone || '').replace(/[^0-9]/g, '');
+      const digits = phoneDigits(phone).replace('+', '');
       const text = encodeURIComponent(`Hi ${name}, I found your profile on SemaKazi and I'd like to talk about a job.`);
       return `https://wa.me/${digits}?text=${text}`;
     }
@@ -39,15 +39,15 @@
 
       container.innerHTML = `
         <div class="card">
-          <h1>${profile.name}</h1>
-          <p class="muted">${profile.trade || 'Trade not listed'} — ${profile.location || 'Location not listed'}</p>
+          <h1>${escapeHtml(profile.name)}</h1>
+          <p class="muted">${escapeHtml(profile.trade || 'Trade not listed')} — ${escapeHtml(profile.location || 'Location not listed')}</p>
           ${avgRating ? `<p class="rating">★ ${avgRating} <span class="muted">(${profile.reviews.length} review${profile.reviews.length === 1 ? '' : 's'})</span></p>` : ''}
-          ${profile.bio ? `<p>${profile.bio}</p>` : ''}
+          ${profile.bio ? `<p>${escapeHtml(profile.bio)}</p>` : ''}
 
           ${profile.phone ? `
             <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
-              <a href="tel:${profile.phone}"><button class="secondary" type="button">Call ${profile.phone}</button></a>
-              <a href="${waLink(profile.phone, profile.name)}" target="_blank" rel="noopener"><button type="button">WhatsApp</button></a>
+              <a href="tel:${escapeHtml(phoneDigits(profile.phone))}"><button class="secondary" type="button">Call ${escapeHtml(profile.phone)}</button></a>
+              <a href="${escapeHtml(waLink(profile.phone, profile.name))}" target="_blank" rel="noopener"><button type="button">WhatsApp</button></a>
             </div>
           ` : ''}
         </div>
@@ -55,7 +55,7 @@
         <div class="card">
           <h2>Skill badges</h2>
           ${profile.badges.length
-            ? profile.badges.map(b => `<span class="badge-pill">${b.badge_name} · ${b.endorsement_count}</span>`).join('')
+            ? profile.badges.map(b => `<span class="badge-pill">${escapeHtml(b.badge_name)} · ${escapeHtml(b.endorsement_count)}</span>`).join('')
             : `<p class="muted">No badges yet.</p>`
           }
           ${canContact ? `
@@ -71,12 +71,15 @@
         <div class="card">
           <h2>Proof of work</h2>
           ${profile.proof_of_work.length
-            ? profile.proof_of_work.map(p => `
+            ? profile.proof_of_work.map(p => {
+                const mediaUrl = safeHttpsUrl(p.media_url);
+                return `
                 <div style="margin-bottom:12px;">
-                  <img src="${p.media_url}" alt="${p.caption || 'Proof of work'}" style="max-width:100%; border-radius:8px;" onerror="this.style.display='none'" />
-                  ${p.caption ? `<p class="muted">${p.caption}</p>` : ''}
+                  ${mediaUrl ? `<img src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.caption || 'Proof of work')}" style="max-width:100%; border-radius:8px;" onerror="this.style.display='none'" />` : ''}
+                  ${p.caption ? `<p class="muted">${escapeHtml(p.caption)}</p>` : ''}
                 </div>
-              `).join('')
+              `;
+              }).join('')
             : `<p class="muted">No proof-of-work uploaded yet.</p>`
           }
         </div>
@@ -93,7 +96,7 @@
 
               <button type="submit">Send request</button>
               <p class="error-message" id="request-error" style="display:none;"></p>
-              <p class="muted" id="request-success" style="display:none;">Request sent — ${profile.name} will see it on their dashboard.</p>
+              <p class="muted" id="request-success" style="display:none;">Request sent — ${escapeHtml(profile.name)} will see it on their dashboard.</p>
             </form>
           </div>
         ` : ''}
@@ -104,9 +107,9 @@
             ${profile.reviews.length
               ? profile.reviews.map(r => `
                   <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--color-border);">
-                    <p class="rating">★ ${r.rating} <strong>${r.reviewer_name}</strong></p>
-                    ${r.comment ? `<p>${r.comment}</p>` : ''}
-                    ${viewer ? `<button class="secondary" data-flag-id="${r.id}" style="margin-top:4px; font-size:0.75rem; padding:4px 10px;">Report</button>` : ''}
+                    <p class="rating">★ ${escapeHtml(r.rating)} <strong>${escapeHtml(r.reviewer_name)}</strong></p>
+                    ${r.comment ? `<p>${escapeHtml(r.comment)}</p>` : ''}
+                    ${viewer ? `<button class="secondary" data-flag-id="${escapeHtml(r.id)}" style="margin-top:4px; font-size:0.75rem; padding:4px 10px;">Report</button>` : ''}
                   </div>
                 `).join('')
               : `<p class="muted">No reviews yet. Be the first to leave one.</p>`
@@ -224,7 +227,7 @@
         const profile = await api.getProfile(profileId);
         renderProfile(profile);
       } catch (err) {
-        container.innerHTML = `<p class="error-message">${err.message}</p>`;
+        renderError(container, err.message);
       }
     }
 

@@ -4,6 +4,39 @@
 
 const API_BASE = window.API_BASE;
 
+// Every value from the API is user-supplied text. Pass it through
+// escapeHtml before interpolating it into an innerHTML template, so names,
+// bios, reviews and messages always display as text, never as markup.
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
+// Returns the URL only if it is a well-formed https: link, else null, so a
+// stored javascript: or data: URL can never end up in a src or href.
+function safeHttpsUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+// Phone numbers reduced to digits and a leading +, safe for tel: links.
+function phoneDigits(phone) {
+  return String(phone ?? '').replace(/[^0-9+]/g, '');
+}
+
+// Shows an error message in el as plain text, replacing its contents.
+function renderError(el, message) {
+  const p = document.createElement('p');
+  p.className = 'error-message';
+  p.textContent = message;
+  el.replaceChildren(p);
+}
+
 function getToken() {
   return localStorage.getItem('semakazi_token');
 }

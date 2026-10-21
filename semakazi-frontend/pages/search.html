@@ -41,12 +41,12 @@
       }
 
       resultsEl.innerHTML = fundis.map(f => `
-        <a href="profile.html?id=${f.id}" style="text-decoration:none; color:inherit;">
+        <a href="profile.html?id=${encodeURIComponent(f.id)}" style="text-decoration:none; color:inherit;">
           <div class="card">
-            <h2>${f.name}</h2>
-            <p class="muted">${f.trade || 'Trade not listed'} — ${f.location || 'Location not listed'}</p>
+            <h2>${escapeHtml(f.name)}</h2>
+            <p class="muted">${escapeHtml(f.trade || 'Trade not listed')} — ${escapeHtml(f.location || 'Location not listed')}</p>
             ${f.average_rating
-              ? `<p class="rating">★ ${f.average_rating} <span class="muted">(${f.review_count} review${f.review_count === 1 ? '' : 's'})</span></p>`
+              ? `<p class="rating">★ ${escapeHtml(f.average_rating)} <span class="muted">(${escapeHtml(f.review_count)} review${f.review_count === 1 ? '' : 's'})</span></p>`
               : `<p class="muted">No reviews yet</p>`
             }
           </div>
@@ -68,7 +68,7 @@
         const fundis = await api.searchProfiles(params);
         renderResults(fundis);
       } catch (err) {
-        resultsEl.innerHTML = `<p class="error-message">${err.message}</p>`;
+        renderError(resultsEl, err.message);
       }
     }
 

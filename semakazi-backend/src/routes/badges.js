@@ -4,7 +4,8 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// POST /api/badges/:userId — any logged-in user can endorse a fundi's skill,
+// POST /api/badges/:userId — any logged-in user can endorse a fundi's skill
+// (only fundi profiles can receive badges),
 // but the same person can't endorse the same badge on the same fundi twice
 // (enforced by a UNIQUE constraint on user_id + badge_name + awarded_by_id
 // in the schema) — closes the "spam the same badge" gap from earlier.
@@ -15,8 +16,8 @@ router.post('/:userId', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'You cannot endorse yourself' });
   }
 
-  const fundi = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.userId);
-  if (!fundi) return res.status(404).json({ error: 'User not found' });
+  const fundi = db.prepare('SELECT id FROM users WHERE id = ? AND role = \'fundi\'').get(req.params.userId);
+  if (!fundi) return res.status(404).json({ error: 'Fundi not found' });
 
   const endorser = db.prepare('SELECT name FROM users WHERE id = ?').get(req.user.id);
 

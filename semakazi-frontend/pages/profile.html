@@ -36,6 +36,8 @@
 
       const isOwnProfile = viewer && viewer.id === profile.id;
       const canContact = viewer && !isOwnProfile && profile.role === 'fundi';
+      // Only clients can request or review a fundi; the API rejects other roles.
+      const canHire = canContact && viewer.role === 'client';
 
       container.innerHTML = `
         <div class="card">
@@ -84,7 +86,7 @@
           }
         </div>
 
-        ${canContact ? `
+        ${canHire ? `
           <div class="card">
             <h2>Request this fundi</h2>
             <form id="request-form">
@@ -120,6 +122,8 @@
           ${viewer
             ? (isOwnProfile
                 ? `<p class="muted">You can't review your own profile.</p>`
+                : !canHire
+                ? `<p class="muted">Only client accounts can review fundis.</p>`
                 : `
                   <form id="review-form">
                     <label for="rating">Rating</label>

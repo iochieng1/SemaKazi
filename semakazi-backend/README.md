@@ -59,6 +59,10 @@ Outside production, both fall back to fixed local-only values with a warning.
 
 Other roles get `403`. Flagged reviews are hidden from profiles, search ratings and `GET /api/reviews/:fundiId` until an admin deletes them; `GET /api/reviews/moderation/flagged` still lists them.
 
+## Backups
+
+Production backups go to S3-compatible storage every 6 hours. `npm run db:backup`, `db:backups`, `db:restore` and `db:verify-backup` manage them. See [docs/DATABASE_BACKUPS.md](../docs/DATABASE_BACKUPS.md) for setup, the restore procedure and the pre-launch restore drill.
+
 ## Tests
 
 ```bash

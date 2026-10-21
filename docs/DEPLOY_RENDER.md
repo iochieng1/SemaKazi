@@ -17,8 +17,9 @@ Backend (Web Service)
   - Do not set `SEED_DEMO_DATA`; it is ignored in production anyway.
 - With `NODE_ENV=production` the service refuses to start if `JWT_SECRET` or a strong `ADMIN_TOKEN` is missing. Check the deploy logs if it fails to boot.
 - Under **Advanced** add a **Persistent Disk** and mount it at `/data` (this ensures SQLite file persists across deploys).
+- Configure off-disk backups with the `BACKUP_S3_*` variables before launch, and run the restore drill. See [DATABASE_BACKUPS.md](DATABASE_BACKUPS.md). Without them the service logs a warning that the database is not being backed up.
 
-Notes: If you prefer a managed DB (recommended for production), provision a Postgres database on Render and migrate the app from SQLite to Postgres.
+Notes: SQLite on the persistent disk is the launch database. Managed Postgres remains a later option; see DATABASE_BACKUPS.md.
 
 Frontend (Static Site)
 

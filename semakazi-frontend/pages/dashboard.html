@@ -29,9 +29,9 @@
     function renderDashboard(profile) {
       container.innerHTML = `
         <div class="card">
-          <h1>Welcome, ${profile.name}</h1>
+          <h1>Welcome, ${escapeHtml(profile.name)}</h1>
           <p class="muted">
-            <a href="profile.html?id=${profile.id}">View your public profile</a>
+            <a href="profile.html?id=${encodeURIComponent(profile.id)}">View your public profile</a>
           </p>
         </div>
 
@@ -39,16 +39,16 @@
           <h2>Edit profile</h2>
           <form id="edit-form">
             <label for="trade">Trade</label>
-            <input type="text" id="trade" value="${profile.trade || ''}" />
+            <input type="text" id="trade" value="${escapeHtml(profile.trade)}" />
 
             <label for="location">Location</label>
-            <input type="text" id="location" value="${profile.location || ''}" />
+            <input type="text" id="location" value="${escapeHtml(profile.location)}" />
 
             <label for="bio">Bio</label>
-            <textarea id="bio" rows="3">${profile.bio || ''}</textarea>
+            <textarea id="bio" rows="3">${escapeHtml(profile.bio)}</textarea>
 
             <label for="phone">Phone</label>
-            <input type="text" id="phone" value="${profile.phone || ''}" />
+            <input type="text" id="phone" value="${escapeHtml(profile.phone)}" />
 
             <button type="submit">Save changes</button>
             <p class="error-message" id="edit-error" style="display:none;"></p>
@@ -73,9 +73,9 @@
             ${profile.proof_of_work.length
               ? profile.proof_of_work.map(p => `
                   <div class="card" style="margin-bottom:8px;">
-                    <p>${p.caption || '(no caption)'}</p>
-                    <p class="muted" style="word-break:break-all;">${p.media_url}</p>
-                    <button class="secondary" data-delete-id="${p.id}">Remove</button>
+                    <p>${escapeHtml(p.caption || '(no caption)')}</p>
+                    <p class="muted" style="word-break:break-all;">${escapeHtml(p.media_url)}</p>
+                    <button class="secondary" data-delete-id="${escapeHtml(p.id)}">Remove</button>
                   </div>
                 `).join('')
               : `<p class="muted">You haven't added any proof-of-work yet.</p>`
@@ -159,14 +159,14 @@
         }
         listEl.innerHTML = requests.map(r => `
           <div class="card" style="margin-bottom:8px;">
-            <p><strong>${r.client_name}</strong> <span class="muted">(${r.client_phone || 'no phone listed'})</span></p>
-            <p>${r.message}</p>
-            ${r.preferred_date ? `<p class="muted">Preferred date: ${r.preferred_date}</p>` : ''}
-            <p class="rating" style="text-transform:uppercase;">${r.status}</p>
+            <p><strong>${escapeHtml(r.client_name)}</strong> <span class="muted">(${escapeHtml(r.client_phone || 'no phone listed')})</span></p>
+            <p>${escapeHtml(r.message)}</p>
+            ${r.preferred_date ? `<p class="muted">Preferred date: ${escapeHtml(r.preferred_date)}</p>` : ''}
+            <p class="rating" style="text-transform:uppercase;">${escapeHtml(r.status)}</p>
             ${r.status === 'pending' ? `
               <div style="display:flex; gap:8px;">
-                <button data-request-id="${r.id}" data-status="accepted">Accept</button>
-                <button class="secondary" data-request-id="${r.id}" data-status="declined">Decline</button>
+                <button data-request-id="${escapeHtml(r.id)}" data-status="accepted">Accept</button>
+                <button class="secondary" data-request-id="${escapeHtml(r.id)}" data-status="declined">Decline</button>
               </div>
             ` : ''}
           </div>
@@ -183,7 +183,7 @@
           });
         });
       } catch (err) {
-        listEl.innerHTML = `<p class="error-message">${err.message}</p>`;
+        renderError(listEl, err.message);
       }
     }
 
@@ -192,7 +192,7 @@
         const profile = await api.getProfile(user.id);
         renderDashboard(profile);
       } catch (err) {
-        container.innerHTML = `<p class="error-message">${err.message}</p>`;
+        renderError(container, err.message);
       }
     }
 

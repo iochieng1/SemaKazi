@@ -53,8 +53,8 @@ Outside production, both fall back to fixed local-only values with a warning.
 
 | Action | Allowed roles |
 | --- | --- |
-| Leave a review, send a job request | `client` |
-| Add proof of work, accept or decline requests sent to you | `fundi` |
+| Leave a review, send a job request, list your sent requests (`GET /api/requests/outgoing`) | `client` |
+| Add proof of work, list requests sent to you (`GET /api/requests/incoming`), accept or decline them | `fundi` |
 | Endorse a skill | any logged-in user, on a `fundi` profile |
 
 Other roles get `403`. Flagged reviews are hidden from profiles, search ratings and `GET /api/reviews/:fundiId` until an admin deletes them; `GET /api/reviews/moderation/flagged` still lists them.

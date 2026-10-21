@@ -309,3 +309,25 @@ test('moderation routes reject a wrong admin token', async () => {
   });
   assert.equal(status, 403);
 });
+
+test('a client sees their sent requests, and each inbox is limited to its role', async () => {
+  const fundi = await register('Outgoing Fundi', 'outgoingfundi@test.com', 'fundi', { trade: 'Roofer', phone: '0700000001' });
+  const client = await register('Outgoing Client', 'outgoingclient@test.com', 'client');
+
+  await request('/api/requests', {
+    method: 'POST', headers: client.auth, body: { fundi_id: fundi.id, message: 'Fix the roof' }
+  });
+
+  const outgoing = await request('/api/requests/outgoing', { headers: client.auth });
+  assert.equal(outgoing.status, 200);
+  assert.equal(outgoing.data.length, 1);
+  assert.equal(outgoing.data[0].fundi_name, 'Outgoing Fundi');
+  assert.equal(outgoing.data[0].fundi_trade, 'Roofer');
+  assert.equal(outgoing.data[0].status, 'pending');
+
+  const fundiOutgoing = await request('/api/requests/outgoing', { headers: fundi.auth });
+  assert.equal(fundiOutgoing.status, 403);
+
+  const clientIncoming = await request('/api/requests/incoming', { headers: client.auth });
+  assert.equal(clientIncoming.status, 403);
+});

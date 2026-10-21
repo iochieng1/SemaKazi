@@ -32,12 +32,25 @@ router.post('/', requireAuth, requireRole('client'), (req, res) => {
 
 // GET /api/requests/incoming — logged-in fundi's own inbox: requests sent
 // to them by clients.
-router.get('/incoming', requireAuth, (req, res) => {
+router.get('/incoming', requireAuth, requireRole('fundi'), (req, res) => {
   const requests = db.prepare(`
     SELECT jr.*, u.name as client_name, u.phone as client_phone
     FROM job_requests jr
     JOIN users u ON u.id = jr.client_id
     WHERE jr.fundi_id = ?
+    ORDER BY jr.created_at DESC
+  `).all(req.user.id);
+  res.json(requests);
+});
+
+// GET /api/requests/outgoing — logged-in client's sent requests, with the
+// fundi's name, trade and phone, so they can follow up on each job.
+router.get('/outgoing', requireAuth, requireRole('client'), (req, res) => {
+  const requests = db.prepare(`
+    SELECT jr.*, u.name as fundi_name, u.trade as fundi_trade, u.phone as fundi_phone
+    FROM job_requests jr
+    JOIN users u ON u.id = jr.fundi_id
+    WHERE jr.client_id = ?
     ORDER BY jr.created_at DESC
   `).all(req.user.id);
   res.json(requests);

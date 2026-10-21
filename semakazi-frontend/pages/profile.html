@@ -29,13 +29,31 @@
       return `https://wa.me/${digits}?text=${text}`;
     }
 
+    // Clients don't have a trade, portfolio or reviews, so their profile
+    // is just who they are; search only ever links to fundis.
+    function renderClientProfile(profile) {
+      container.innerHTML = `
+        <div class="card">
+          <p class="muted">Client account</p>
+          <h1>${escapeHtml(profile.name)}</h1>
+          ${profile.location ? `<p class="muted">${escapeHtml(profile.location)}</p>` : ''}
+          <p class="muted">Clients hire fundis on SemaKazi. Only fundi profiles have reviews and proof of work.</p>
+        </div>
+      `;
+    }
+
     function renderProfile(profile) {
+      if (profile.role !== 'fundi') {
+        renderClientProfile(profile);
+        return;
+      }
+
       const avgRating = profile.reviews.length
         ? (profile.reviews.reduce((sum, r) => sum + r.rating, 0) / profile.reviews.length).toFixed(1)
         : null;
 
       const isOwnProfile = viewer && viewer.id === profile.id;
-      const canContact = viewer && !isOwnProfile && profile.role === 'fundi';
+      const canContact = viewer && !isOwnProfile;
       // Only clients can request or review a fundi; the API rejects other roles.
       const canHire = canContact && viewer.role === 'client';
 

@@ -26,13 +26,32 @@
       window.location.href = 'login.html';
     }
 
+    // Fundis and clients use SemaKazi for opposite things — fundis show
+    // their work and answer requests, clients find and hire fundis — so
+    // each role gets its own dashboard.
     function renderDashboard(profile) {
+      if (profile.role === 'fundi') {
+        renderFundiDashboard(profile);
+      } else {
+        renderClientDashboard(profile);
+      }
+    }
+
+    function renderFundiDashboard(profile) {
       container.innerHTML = `
         <div class="card">
+          <p class="muted">Fundi account</p>
           <h1>Welcome, ${escapeHtml(profile.name)}</h1>
           <p class="muted">
             <a href="profile.html?id=${encodeURIComponent(profile.id)}">View your public profile</a>
           </p>
+        </div>
+
+        <div class="card">
+          <h2>Incoming requests</h2>
+          <div id="requests-list">
+            <p class="muted">Loading...</p>
+          </div>
         </div>
 
         <div class="card">
@@ -83,15 +102,6 @@
           </div>
         </div>
 
-        ${profile.role === 'fundi' ? `
-          <div class="card">
-            <h2>Incoming requests</h2>
-            <div id="requests-list">
-              <p class="muted">Loading...</p>
-            </div>
-          </div>
-        ` : ''}
-
         <div class="card">
           <h2>Your stats</h2>
           <p><strong>${profile.reviews.length}</strong> review${profile.reviews.length === 1 ? '' : 's'}</p>
@@ -99,27 +109,14 @@
         </div>
       `;
 
-      if (profile.role === 'fundi') {
-        loadRequests();
-      }
+      loadIncomingRequests();
 
-      document.getElementById('edit-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const errorEl = document.getElementById('edit-error');
-        errorEl.style.display = 'none';
-        try {
-          await api.updateProfile(profile.id, {
-            trade: document.getElementById('trade').value,
-            location: document.getElementById('location').value,
-            bio: document.getElementById('bio').value,
-            phone: document.getElementById('phone').value
-          });
-          refresh();
-        } catch (err) {
-          errorEl.textContent = err.message;
-          errorEl.style.display = 'block';
-        }
-      });
+      bindEditForm(profile, () => ({
+        trade: document.getElementById('trade').value,
+        location: document.getElementById('location').value,
+        bio: document.getElementById('bio').value,
+        phone: document.getElementById('phone').value
+      }));
 
       document.getElementById('pow-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -149,12 +146,67 @@
       });
     }
 
-    async function loadRequests() {
+    function renderClientDashboard(profile) {
+      container.innerHTML = `
+        <div class="card">
+          <p class="muted">Client account</p>
+          <h1>Welcome, ${escapeHtml(profile.name)}</h1>
+          <p>Find a verified fundi, check their reviews and proof of work, then send them a job request.</p>
+          <a href="search.html"><button type="button">Find a fundi</button></a>
+        </div>
+
+        <div class="card">
+          <h2>Your job requests</h2>
+          <div id="requests-list">
+            <p class="muted">Loading...</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Your details</h2>
+          <p class="muted">Fundis you send a request to see your name and phone number, so they can reach you.</p>
+          <form id="edit-form">
+            <label for="location">Location</label>
+            <input type="text" id="location" value="${escapeHtml(profile.location)}" />
+
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" value="${escapeHtml(profile.phone)}" />
+
+            <button type="submit">Save changes</button>
+            <p class="error-message" id="edit-error" style="display:none;"></p>
+          </form>
+        </div>
+      `;
+
+      loadOutgoingRequests();
+
+      bindEditForm(profile, () => ({
+        location: document.getElementById('location').value,
+        phone: document.getElementById('phone').value
+      }));
+    }
+
+    function bindEditForm(profile, readFields) {
+      document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById('edit-error');
+        errorEl.style.display = 'none';
+        try {
+          await api.updateProfile(profile.id, readFields());
+          refresh();
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        }
+      });
+    }
+
+    async function loadIncomingRequests() {
       const listEl = document.getElementById('requests-list');
       try {
         const requests = await api.getIncomingRequests();
         if (requests.length === 0) {
-          listEl.innerHTML = `<p class="muted">No requests yet.</p>`;
+          listEl.innerHTML = `<p class="muted">No requests yet. Clients who find your profile can send you one.</p>`;
           return;
         }
         listEl.innerHTML = requests.map(r => `
@@ -176,12 +228,39 @@
           btn.addEventListener('click', async () => {
             try {
               await api.updateRequestStatus(btn.dataset.requestId, btn.dataset.status);
-              loadRequests();
+              loadIncomingRequests();
             } catch (err) {
               alert(err.message);
             }
           });
         });
+      } catch (err) {
+        renderError(listEl, err.message);
+      }
+    }
+
+    async function loadOutgoingRequests() {
+      const listEl = document.getElementById('requests-list');
+      try {
+        const requests = await api.getOutgoingRequests();
+        if (requests.length === 0) {
+          listEl.innerHTML = `<p class="muted">You haven't sent any requests yet. <a href="search.html">Find a fundi</a> to get started.</p>`;
+          return;
+        }
+        listEl.innerHTML = requests.map(r => `
+          <div class="card" style="margin-bottom:8px;">
+            <p>
+              <strong><a href="profile.html?id=${encodeURIComponent(r.fundi_id)}">${escapeHtml(r.fundi_name)}</a></strong>
+              <span class="muted">${escapeHtml(r.fundi_trade || '')}</span>
+            </p>
+            <p>${escapeHtml(r.message)}</p>
+            ${r.preferred_date ? `<p class="muted">Preferred date: ${escapeHtml(r.preferred_date)}</p>` : ''}
+            <p class="rating" style="text-transform:uppercase;">${escapeHtml(r.status)}</p>
+            ${r.status === 'accepted' && r.fundi_phone ? `
+              <p>Accepted. Call <a href="tel:${escapeHtml(phoneDigits(r.fundi_phone))}">${escapeHtml(r.fundi_phone)}</a> to arrange the job.</p>
+            ` : ''}
+          </div>
+        `).join('');
       } catch (err) {
         renderError(listEl, err.message);
       }

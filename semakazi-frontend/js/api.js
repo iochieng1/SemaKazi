@@ -96,6 +96,7 @@ const api = {
   addBadge: (userId, payload) => apiRequest(`/badges/${userId}`, { method: 'POST', body: payload, auth: true }),
   sendRequest: (payload) => apiRequest('/requests', { method: 'POST', body: payload, auth: true }),
   getIncomingRequests: () => apiRequest('/requests/incoming', { auth: true }),
+  getOutgoingRequests: () => apiRequest('/requests/outgoing', { auth: true }),
   updateRequestStatus: (id, status) => apiRequest(`/requests/${id}/status`, { method: 'PUT', body: { status }, auth: true })
 };
 

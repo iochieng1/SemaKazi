@@ -9,9 +9,13 @@ Backend (Web Service)
 - Build Command: `npm install --production`
 - Start Command: `npm start`
 - Add Environment Variables:
+  - `NODE_ENV` = `production` (required: turns on the startup checks below and blocks demo seeding)
   - `JWT_SECRET` = (secure random string)
+  - `ADMIN_TOKEN` = (secure random string, at least 32 characters, e.g. `openssl rand -hex 32`)
   - `PORT` = `4000` (optional)
   - `DB_PATH` = `/data/semakazi.db`
+  - Do not set `SEED_DEMO_DATA`; it is ignored in production anyway.
+- With `NODE_ENV=production` the service refuses to start if `JWT_SECRET` or a strong `ADMIN_TOKEN` is missing. Check the deploy logs if it fails to boot.
 - Under **Advanced** add a **Persistent Disk** and mount it at `/data` (this ensures SQLite file persists across deploys).
 
 Notes: If you prefer a managed DB (recommended for production), provision a Postgres database on Render and migrate the app from SQLite to Postgres.

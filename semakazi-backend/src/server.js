@@ -1,11 +1,10 @@
 require('dotenv').config();
 const createApp = require('./app');
-const seedIfEmpty = require('./db/seed');
+const { seedOnStartup } = require('./db/seed');
 
-// Auto-seeds on startup if the database is empty — matters on hosting
-// platforms with ephemeral disks (e.g. Render free tier), where the
-// SQLite file gets wiped on every restart/redeploy.
-seedIfEmpty();
+// Demo data only when SEED_DEMO_DATA=true outside production — useful for
+// a local or throwaway demo instance whose disk is wiped on redeploy.
+seedOnStartup();
 
 const app = createApp();
 const PORT = process.env.PORT || 4000;
